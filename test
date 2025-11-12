@@ -1,0 +1,71 @@
+import requests
+import sys
+
+# --- Configuration ---
+
+# This is the endpoint to START a prediction
+url = "https://us-central1-aiplatform.googleapis.com/v1/projects/aiplatform-poc/locations/us-central1/publishers/google/models/veo-2.0-generate-001:predict"
+
+# Your API key (Store this securely!)
+API_KEY = "your_api_key_here" 
+
+# The query parameters (for the ?key=... part)
+params = {
+    'key': API_KEY
+}
+
+# --- Payload with Prompt and Parameters ---
+
+# This is the main data payload for the request.
+# We include the prompt in 'instances' and other settings in 'parameters'.
+payload = {
+    "instances": [
+        {
+            # Your text prompt
+            "prompt": "A cinematic shot of a golden retriever wearing tiny sunglasses, riding a skateboard on a beach boardwalk"
+        }
+    ],
+    "parameters": {
+        # '16:9' (landscape) or '9:16' (portrait)
+        "aspectRatio": "16:9", 
+        
+        # Duration in seconds. For Veo 2.0, this is typically between 5 and 8.
+        "duration": 8, 
+        
+        # Number of videos to generate
+        "sampleCount": 1,
+        
+        # Optional: A number to get reproducible results
+        # "seed": 12345
+    }
+}
+
+# --- Execution ---
+
+print(f"Sending POST request to start generation: {url}")
+
+try:
+    response = requests.post(url, params=params, json=payload)
+
+    # Check for HTTP errors
+    response.raise_for_status()
+
+    # Request was successful
+    print("\n✅ Generation Job Started Successfully!")
+    
+    # Print the JSON response
+    print("--- Response (This contains your operationName) ---")
+    response_data = response.json()
+    print(response_data)
+    
+    # You will need this operationName for Step 2
+    if 'operation' in response_data:
+        print("\n--- ❗️ IMPORTANT ---")
+        print("Copy this operationName to fetch your result:")
+        print(response_data['operation']['name'])
+    
+except requests.exceptions.HTTPError as errh:
+    print(f"\n❌ HTTP Error: {errh}")
+    print(f"Response Body: {errh.response.text}")
+except requests.exceptions.RequestException as err:
+    print(f"\n❌ An Unexpected Error Occurred: {err}")
